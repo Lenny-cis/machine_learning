@@ -102,8 +102,42 @@ def createPlot(inTree):
     plt.show()
 
 
+def classify(inputTree, featLabels, testVec):
+    firstStr = list(inputTree.keys())[0]
+    secondDict = inputTree[firstStr]
+    featIndex = featLabels.index(firstStr)
+    for key in secondDict.keys():
+        if testVec[featIndex] == key:
+            if type(secondDict[key]).__name__ == 'dict':
+                classLabel = classify(secondDict[key], featLabels, testVec)
+            else:
+                classLabel = secondDict[key]
+    return classLabel
+
+
+def storeTree(inputTree, filename):
+    import pickle
+    fw = open(filename, 'wb')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+
+def grabTree(filename):
+    import pickle
+    fr = open(filename, 'rb')
+    return pickle.load(fr)
+
+
+fr = open('lenses.txt')
+lenses = [inst.strip().split('\t')[1:] for inst in fr.readlines()]
+lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
+lensesTree = createTree(lenses, lensesLabels)
+lensesTree
+createPlot(lensesTree)
 myTree = retrieveTree(0)
 #myTree['no surfacing'][3] = 'maybe'
-createPlot(myTree)
-getNumLeafs(myTree)
-getTreeDepth(myTree)
+myTree
+classify(myTree, labels, [1, 0])
+classify(myTree, labels, [1, 1])
+storeTree(myTree, 'classifierStorage.txt')
+grabTree('classifierStorage.txt')
