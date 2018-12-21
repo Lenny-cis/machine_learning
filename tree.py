@@ -7,6 +7,8 @@ Created on Sat Dec 15 13:27:59 2018
 
 from math import log
 import pandas as pd
+import numpy as np
+import operator
 
 
 def calcshannoEnt(dataSet):
@@ -25,13 +27,19 @@ def calcshannoEnt(dataSet):
 
 
 def createDataSet():
+#    dataSet = [[1, 1, 'yes'],
+#               [1, 1, 'yes'],
+#               [1, 0, 'no'],
+#               [0, 1, 'no'],
+#               [0, 1, 'no']]
     A = np.random.randint(0, 2, 100000)
     B = np.random.randint(0, 2, 100000)
     F = ['yes' if x == 1 else 'no' for x in np.random.randint(0, 2, 100000)]
-    dataSet1 = pd.DataFrame({'A':A, 'B':B, 'F':F}).values.tolist()
-    dataSet2 = pd.DataFrame({'A':A, 'B':B, 'F':F})
+    dataSet1 = pd.DataFrame({'A': A, 'B': B, 'F': F}).values.tolist()
+    dataSet2 = pd.DataFrame({'A': A, 'B': B, 'F': F})
     labels = ['no surfacing', 'flippers']
     return dataSet1, dataSet2, labels
+
 
 def splitDataSet(dataSet, axis, value):
     retDataSet = []
@@ -62,9 +70,39 @@ def chooseBestFeatureToSplit(dataSet):
             bestFeature = i
     return bestFeature
 
+
+def mayorityCnt(classList):
+    classCount = {}
+    for vote in classList:
+        if vote not in classCount.keys():
+            classCount[vote] = 0
+        classCount[vote] += 1
+    sortedClassCount = sorted(classCount.items(),
+                              key=operator.itemgetter(1), reverse=True)
+    return sortedClassCount[0][0]
+
+
+def createTree(dataSet, labels):
+    classList = [example[-1] for example in dataSet]
+    if classList.count(classList[0]) == len(classList):
+        return classList[0]
+    if len(dataSet[0]) == 1:
+        return mayorityCnt(classList)
+    bestFeat = chooseBestFeatureToSplit(dataSet)
+    bestFeatLabel = labels[bestFeat]
+    myTree = {bestFeatLabel: {}}
+    del(labels[bestFeat])
+    featValues = [example[bestFeat] for example in dataSet]
+    uniqueVals = set(featValues)
+    for value in uniqueVals:
+        subLabels = labels[:]
+        myTree[bestFeatLabel][value] =\
+            createTree(splitDataSet(dataSet, bestFeat, value), subLabels)
+    return myTree
+
+
 myDat1, myDat2, labels = createDataSet()
-%timeit chooseBestFeatureToSplit(myDat1)
-%timeit calcshannoEnt(myDat)
+%timeit createTree(myDat1, labels[:])
 
 
 
